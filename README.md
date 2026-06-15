@@ -30,7 +30,12 @@ React single-page application for portfolio management, risk visualization, marg
 
 **Do not commit `.env` or production API URLs with secrets.**
 
-Copy `.env.example` to `.env` and set `VITE_API_URL` to your backend origin (no trailing slash). Vite embeds this value at build time for production.
+Copy `.env.example` to `.env` and set:
+
+- `VITE_API_URL` — backend origin (no trailing slash)
+- `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — from [Supabase → Project Settings → API](https://supabase.com/dashboard/project/_/settings/api)
+
+Vite embeds these at build time for production. Client: `src/lib/supabase.ts`.
 
 ## Local development
 
