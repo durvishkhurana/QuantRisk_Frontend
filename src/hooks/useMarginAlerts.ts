@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { resolveWebSocketBase } from "../lib/apiBase";
 
 type StreamMessage = {
   stream_id: string;
@@ -21,7 +22,7 @@ export const useMarginAlerts = (portfolioId?: string, onMessage?: (msg: StreamMe
   useEffect(() => {
     if (!portfolioId) return;
 
-    const wsBase = (import.meta.env.VITE_API_URL ?? "http://localhost:8000").replace("http", "ws");
+    const wsBase = resolveWebSocketBase();
     let ws: WebSocket | null = null;
     let closed = false;
 

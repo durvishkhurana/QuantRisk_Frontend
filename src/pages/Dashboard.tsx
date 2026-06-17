@@ -9,14 +9,14 @@ export const DashboardPage = () => {
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [marginLimit, setMarginLimit] = useState("0.05");
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["portfolios"],
-    queryFn: async () => (await api.get("/portfolios")).data as Portfolio[],
+    queryFn: async () => (await api.get("/portfolios/")).data as Portfolio[],
   });
   const createMutation = useMutation({
     mutationFn: async (e: FormEvent) => {
       e.preventDefault();
-      await api.post("/portfolios", { name, margin_limit: Number(marginLimit) });
+      await api.post("/portfolios/", { name, margin_limit: Number(marginLimit) });
     },
     onSuccess: async () => {
       setName("");
@@ -45,8 +45,24 @@ export const DashboardPage = () => {
             Create
           </button>
         </form>
-        {isLoading ? (
+        {isError ? (
+          <div className="terminal-panel p-4 text-sm space-y-2">
+            <p className="text-danger">Could not load portfolios from the API.</p>
+            <p className="text-text-secondary font-mono text-xs break-all">
+              {error instanceof Error ? error.message : "Request failed — check login and VITE_API_URL."}
+            </p>
+            <button
+              type="button"
+              className="px-3 py-1.5 rounded-terminal border border-border text-text-primary text-sm hover:border-accent-cyan"
+              onClick={() => refetch()}
+            >
+              Retry
+            </button>
+          </div>
+        ) : isLoading ? (
           <p className="text-text-muted text-sm">Loading…</p>
+        ) : data?.length === 0 ? (
+          <p className="text-text-muted text-sm">No portfolios yet. Create one above or run the backend seed script.</p>
         ) : (
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
             {data?.map((p) => (

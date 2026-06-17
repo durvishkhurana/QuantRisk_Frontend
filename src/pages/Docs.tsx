@@ -2,12 +2,8 @@ import SwaggerUI from "swagger-ui-react";
 import "swagger-ui-react/swagger-ui.css";
 
 import { Navbar } from "../components/layout/Navbar";
+import { OPENAPI_URL } from "../lib/apiBase";
 import { useAuthStore } from "../store";
-
-const inferredBase =
-  typeof window !== "undefined" ? `${window.location.protocol}//${window.location.hostname}:8000` : "http://localhost:8000";
-const apiBase = import.meta.env.VITE_API_URL ?? inferredBase;
-const openApiUrl = `${apiBase}/openapi.json`;
 
 export const DocsPage = () => {
   const token = useAuthStore((s) => s.token);
@@ -138,14 +134,14 @@ export const DocsPage = () => {
         <div className="terminal-card p-5">
           <h1 className="text-text-primary text-2xl font-semibold mb-2">API Reference</h1>
           <p className="text-text-secondary text-sm">
-            Live OpenAPI docs from <code className="font-mono text-accent-green">{openApiUrl}</code>. Authenticated
+            Live OpenAPI docs from <code className="font-mono text-accent-green">{OPENAPI_URL}</code>. Authenticated
             requests automatically use your active session token.
           </p>
         </div>
 
         <div className="docs-swagger terminal-card overflow-hidden p-4">
           <SwaggerUI
-            url={openApiUrl}
+            url={OPENAPI_URL}
             docExpansion="list"
             defaultModelsExpandDepth={1}
             displayRequestDuration

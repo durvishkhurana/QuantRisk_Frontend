@@ -14,6 +14,7 @@ import {
 } from "../api/alerts";
 import { AlertFeed, AlertItem } from "../components/alerts/AlertFeed";
 import { AppShell } from "../components/layout/AppShell";
+import { resolveWebSocketBase } from "../lib/apiBase";
 import { ShapWaterfall } from "../components/risk/ShapWaterfall";
 
 const PAGE_SIZE = 20;
@@ -83,7 +84,7 @@ export const AlertsPage = () => {
 
   const { data: portfolios } = useQuery({
     queryKey: ["portfolios"],
-    queryFn: async () => (await api.get("/portfolios")).data as Portfolio[],
+    queryFn: async () => (await api.get("/portfolios/")).data as Portfolio[],
   });
 
   const portfolioIds = useMemo(() => (portfolios ?? []).map((p) => p.portfolio_id), [portfolios]);
@@ -483,7 +484,7 @@ function useAlertsLiveSockets(portfolioIds: string[], onActivity: () => void) {
   useEffect(() => {
     if (!portfolioIds.length) return;
 
-    const wsBase = (import.meta.env.VITE_API_URL ?? "http://localhost:8000").replace("http", "ws");
+    const wsBase = resolveWebSocketBase();
     const sockets: WebSocket[] = [];
 
     portfolioIds.forEach((portfolioId) => {

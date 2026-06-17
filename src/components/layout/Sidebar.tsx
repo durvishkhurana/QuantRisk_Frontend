@@ -14,7 +14,7 @@ export const Sidebar = () => {
   const { userEmail, logout, token } = useAuthStore();
   const { data: portfolios } = useQuery({
     queryKey: ["portfolios"],
-    queryFn: async () => (await api.get("/portfolios")).data as Portfolio[],
+    queryFn: async () => (await api.get("/portfolios/")).data as Portfolio[],
     enabled: Boolean(token),
   });
 
