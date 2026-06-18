@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import axios from "axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -78,7 +79,13 @@ export const PortfolioPage = () => {
       setQuantity("10");
       setPurchasePrice("100");
     },
-    onError: () => toast.error("Could not add position"),
+    onError: (err: unknown) => {
+      if (axios.isAxiosError(err) && err.response?.status === 409) {
+        toast.error("That ticker is already in this portfolio");
+        return;
+      }
+      toast.error("Could not add position");
+    },
   });
 
   const deletePosition = useMutation({
@@ -297,6 +304,18 @@ export const PortfolioPage = () => {
         {riskTab === "backtest" && portfolioId && <BacktestPanel portfolioId={portfolioId} />}
 
         {showOptimizer && portfolioId && <OptimizerPanel portfolioId={portfolioId} />}
+
+        {details.isError ? (
+          <div className="terminal-card p-4 border border-danger/40 bg-danger/5 text-xs text-text-secondary">
+            <p className="text-danger font-semibold mb-1">Could not load portfolio holdings</p>
+            <p className="text-text-muted mb-3">
+              The API request failed (network, timeout, or server error). Holdings stay empty until this succeeds.
+            </p>
+            <Button type="button" variant="outline" onClick={() => details.refetch()}>
+              Retry
+            </Button>
+          </div>
+        ) : null}
 
         <div className="grid md:grid-cols-[1fr_2fr] gap-6 pt-4 border-t border-white/[0.04]">
           <div className="space-y-4 bg-[#070b13] p-5 rounded border border-white/[0.04]">

@@ -58,6 +58,13 @@ export const PositionsTable = ({ positions, onDelete, onEdit }: Props) => {
           </tr>
         </thead>
         <tbody className="divide-y divide-white/[0.03]">
+          {positions.length === 0 ? (
+            <tr>
+              <td colSpan={7} className="px-4 py-8 text-center text-text-muted text-xs">
+                No positions yet. Add a ticker on the left, or retry loading if you expected holdings here.
+              </td>
+            </tr>
+          ) : null}
           {positions.map((p) => {
             const isEditing = editingId === p.position_id;
             const pnl = (Number(p.current_price) - Number(p.purchase_price)) * Number(p.quantity);
