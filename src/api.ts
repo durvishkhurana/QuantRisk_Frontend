@@ -19,5 +19,5 @@ export type Portfolio = {
   margin_limit: number;
   positions_count: number;
   total_value: number;
-  latest_risk?: { margin_status: string; var_95: number } | null;
+  latest_risk?: { margin_status: string; var_95: number; margin_utilization?: number } | null;
 };

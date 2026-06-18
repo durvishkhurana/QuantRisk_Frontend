@@ -8,12 +8,12 @@
   }
 
   ::selection {
-    background-color: rgb(0 255 135 / 0.2);
+    background-color: rgb(16 185 129 / 0.25);
   }
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: #4a5568 #1e2d40;
+    scrollbar-color: #475569 #1e293b;
   }
 
   *::-webkit-scrollbar {
@@ -22,36 +22,36 @@
   }
 
   *::-webkit-scrollbar-track {
-    background: #1e2d40;
+    background: #1e293b;
   }
 
   *::-webkit-scrollbar-thumb {
-    background: #4a5568;
+    background: #475569;
     border-radius: 4px;
   }
 }
 
 @layer components {
   .terminal-card {
-    @apply bg-bg-tertiary border border-border rounded-terminal;
+    @apply bg-bg-secondary border border-slate-700/50 rounded-lg shadow-card;
   }
 
   .terminal-panel {
-    @apply bg-bg-secondary border border-border rounded-terminal;
+    @apply bg-bg-secondary border border-slate-700/50 rounded-lg shadow-card;
   }
 }
 
 @keyframes pulse-border {
   0%,
   100% {
-    border-color: #1e2d40;
+    border-color: rgba(51, 65, 85, 0.8);
   }
   50% {
-    border-color: #ff4444;
+    border-color: #ef4444;
   }
 }
 
 .animate-\[pulse-border_1s_ease-in-out_3\] {
   animation: pulse-border 1s ease-in-out 3;
-  border: 1px solid #1e2d40;
+  border: 1px solid rgba(51, 65, 85, 0.8);
 }

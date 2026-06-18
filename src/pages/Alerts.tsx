@@ -84,7 +84,7 @@ export const AlertsPage = () => {
 
   const { data: portfolios } = useQuery({
     queryKey: ["portfolios"],
-    queryFn: async () => (await api.get("/portfolios/")).data as Portfolio[],
+    queryFn: async () => (await api.get("/portfolios")).data as Portfolio[],
   });
 
   const portfolioIds = useMemo(() => (portfolios ?? []).map((p) => p.portfolio_id), [portfolios]);
@@ -477,6 +477,8 @@ function AlertDetailPanel({ eventId, marginUtilization }: { eventId: string; mar
 
 function useAlertsLiveSockets(portfolioIds: string[], onActivity: () => void) {
   const onActivityRef = useRef(onActivity);
+  const streamIdsRef = useRef<Record<string, string>>({});
+
   useEffect(() => {
     onActivityRef.current = onActivity;
   }, [onActivity]);
@@ -488,8 +490,19 @@ function useAlertsLiveSockets(portfolioIds: string[], onActivity: () => void) {
     const sockets: WebSocket[] = [];
 
     portfolioIds.forEach((portfolioId) => {
-      const ws = new WebSocket(`${wsBase}/ws/portfolios/${portfolioId}?since=$`);
-      ws.onmessage = () => onActivityRef.current();
+      const since = streamIdsRef.current[portfolioId] ?? "$";
+      const ws = new WebSocket(`${wsBase}/ws/portfolios/${portfolioId}?since=${encodeURIComponent(since)}`);
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data) as { stream_id?: string };
+          if (message.stream_id) {
+            streamIdsRef.current[portfolioId] = message.stream_id;
+          }
+        } catch {
+          // ignore
+        }
+        onActivityRef.current();
+      };
       sockets.push(ws);
     });
 

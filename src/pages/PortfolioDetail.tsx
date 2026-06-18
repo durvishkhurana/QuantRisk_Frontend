@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { api } from "../api";
 import { getCorrelation } from "../api/risk";
@@ -19,16 +19,28 @@ import { StressTestPanel } from "../components/risk/StressTestPanel";
 import { VaRTrendChart } from "../components/risk/VaRTrendChart";
 import { VolatilityForecastPanel } from "../components/risk/VolatilityForecastPanel";
 import { usePortfolioRisk, useRiskHistory } from "../hooks/usePortfolioRisk";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Skeleton } from "../components/ui/skeleton";
+import { cn } from "../lib/utils";
 
 type RiskTab = "overview" | "monte-carlo" | "backtest";
 
+const tabClass = (active: boolean) =>
+  cn(
+    "px-4 py-2 text-sm rounded-lg border transition-colors",
+    active
+      ? "bg-bg-tertiary border-accent-cyan/40 text-text-primary"
+      : "border-transparent text-text-secondary hover:bg-bg-tertiary hover:text-text-primary",
+  );
+
 export const PortfolioPage = () => {
   const { portfolioId } = useParams();
+  const navigate = useNavigate();
   const [ticker, setTicker] = useState("AAPL");
   const [quantity, setQuantity] = useState("10");
   const [purchasePrice, setPurchasePrice] = useState("100");
   const [showOptimizer, setShowOptimizer] = useState(false);
-  const [showBacktest, setShowBacktest] = useState(false);
   const [riskTab, setRiskTab] = useState<RiskTab>("overview");
   const queryClient = useQueryClient();
 
@@ -57,6 +69,26 @@ export const PortfolioPage = () => {
       await queryClient.invalidateQueries({ queryKey: ["portfolio", portfolioId] });
       toast.success("Position added");
     },
+    onError: () => toast.error("Could not add position"),
+  });
+
+  const deletePosition = useMutation({
+    mutationFn: async (positionId: string) => api.delete(`/portfolios/${portfolioId}/positions/${positionId}`),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["portfolio", portfolioId] });
+      toast.success("Position removed");
+    },
+    onError: () => toast.error("Could not remove position"),
+  });
+
+  const deletePortfolio = useMutation({
+    mutationFn: async () => api.delete(`/portfolios/${portfolioId}`),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["portfolios"] });
+      toast.success("Portfolio deleted");
+      navigate("/dashboard");
+    },
+    onError: () => toast.error("Could not delete portfolio"),
   });
 
   const compute = useMutation({
@@ -80,6 +112,7 @@ export const PortfolioPage = () => {
       };
       setTimeout(poll, 600);
     },
+    onError: () => toast.error("Could not start risk computation"),
   });
 
   const topShap = useMemo(() => risk.data?.shap_attribution ?? [], [risk.data]);
@@ -95,73 +128,76 @@ export const PortfolioPage = () => {
     if (type === "margin_breach") toast.error("Margin breach event received");
     if (type === "margin_warning") toast("Margin warning event received");
     if (type === "CORRELATION_ALERT") toast.error("Correlation stress alert");
-  }, []);
+    queryClient.invalidateQueries({ queryKey: ["risk", portfolioId] });
+    queryClient.invalidateQueries({ queryKey: ["alerts-summary"] });
+  }, [portfolioId, queryClient]);
 
   const { connected } = useMarginAlerts(portfolioId, onAlert);
 
+  const riskLoading = risk.isLoading || compute.isPending;
+
   return (
     <AppShell breadcrumb={`Dashboard / ${details.data?.name ?? "Portfolio"}`} wsConnected={connected}>
-      <section className="max-w-6xl mx-auto space-y-4">
-        <div className="flex flex-wrap items-end justify-between gap-3">
+      <section className="max-w-6xl mx-auto space-y-6">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="text-text-primary text-xl font-semibold">{details.data?.name ?? "Portfolio"}</h2>
-            <p className="text-text-secondary text-sm font-mono">
-              Total Value: ${Math.round(details.data?.total_value ?? 0).toLocaleString()}
+            <h1 className="text-3xl font-semibold text-slate-50 tracking-tight">{details.data?.name ?? "Portfolio"}</h1>
+            <p className="text-text-secondary text-sm font-mono tabular-nums mt-1">
+              Total value: ${Math.round(details.data?.total_value ?? 0).toLocaleString()}
             </p>
           </div>
-          <div className="flex gap-2">
-            <button
-              className="px-4 py-2 rounded-terminal bg-accent-green text-bg-primary text-sm font-semibold"
-              onClick={() => compute.mutate()}
-            >
-              Compute Risk Now
-            </button>
-            <button
-              className="px-4 py-2 rounded-terminal border border-border text-text-primary text-sm"
-              onClick={() => setShowOptimizer((v) => !v)}
-            >
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => compute.mutate()} disabled={compute.isPending}>
+              {compute.isPending ? "Computing…" : "Compute Risk Now"}
+            </Button>
+            <Button variant="outline" onClick={() => setShowOptimizer((v) => !v)}>
               {showOptimizer ? "Hide Optimizer" : "Optimize Portfolio"}
-            </button>
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                if (window.confirm("Delete this portfolio and all its history?")) deletePortfolio.mutate();
+              }}
+            >
+              Delete
+            </Button>
           </div>
         </div>
 
         {portfolioId && <RiskNarrative portfolioId={portfolioId} narrative={risk.data?.risk_narrative} />}
 
-        <div className="risk-section-nav">
-          <button type="button" className={riskTab === "overview" ? "active" : ""} onClick={() => setRiskTab("overview")}>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" className={tabClass(riskTab === "overview")} onClick={() => setRiskTab("overview")}>
             Overview
           </button>
-          <button
-            type="button"
-            className={riskTab === "monte-carlo" ? "active" : ""}
-            onClick={() => setRiskTab("monte-carlo")}
-          >
+          <button type="button" className={tabClass(riskTab === "monte-carlo")} onClick={() => setRiskTab("monte-carlo")}>
             Monte Carlo
           </button>
-          <button
-            type="button"
-            className={riskTab === "backtest" ? "active" : ""}
-            onClick={() => {
-              setRiskTab("backtest");
-              setShowBacktest(true);
-            }}
-          >
+          <button type="button" className={tabClass(riskTab === "backtest")} onClick={() => setRiskTab("backtest")}>
             Backtest
           </button>
         </div>
 
         {riskTab === "overview" && (
           <>
-            {risk.data ? (
+            {riskLoading && !risk.data ? (
+              <div className="grid md:grid-cols-3 gap-4">
+                <Skeleton className="h-28" />
+                <Skeleton className="h-28" />
+                <Skeleton className="h-28" />
+              </div>
+            ) : risk.data ? (
               <RiskMetricCard
                 historicalVar={Number(risk.data.var_95)}
                 monteCarloVar={mc ? Number(mc.var_95) : undefined}
                 marginStatus={risk.data.margin_status}
               />
             ) : (
-              <p className="muted">No risk computation yet.</p>
+              <div className="terminal-card p-6 text-sm text-text-secondary">
+                No risk computation yet. Add positions and click <strong className="text-text-primary">Compute Risk Now</strong>.
+              </div>
             )}
-            <div className="grid md:grid-cols-2 gap-3">
+            <div className="grid md:grid-cols-2 gap-4">
               {risk.data ? (
                 <MarginGauge
                   utilization={Number(risk.data.margin_utilization)}
@@ -169,17 +205,17 @@ export const PortfolioPage = () => {
                 />
               ) : null}
               <div className="terminal-card p-4">
-                <h3 className="text-text-secondary text-[11px] uppercase tracking-wider mb-3">SHAP attribution</h3>
+                <h2 className="text-xs uppercase tracking-widest text-text-muted mb-4">SHAP attribution</h2>
                 <ShapWaterfall items={topShap} />
               </div>
             </div>
-            <div className="grid md:grid-cols-2 gap-3">
+            <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <h3 className="text-text-secondary text-[11px] uppercase tracking-wider mb-2">VaR trend (30d)</h3>
+                <h2 className="text-xs uppercase tracking-widest text-text-muted mb-2">VaR trend (30d)</h2>
                 <VaRTrendChart history={history.data ?? []} />
               </div>
               <div className="terminal-card p-4">
-                <h3 className="text-text-secondary text-[11px] uppercase tracking-wider mb-3">Stress scenarios</h3>
+                <h2 className="text-xs uppercase tracking-widest text-text-muted mb-4">Stress scenarios</h2>
                 <StressTestPanel stress={risk.data?.stress_tests} />
               </div>
             </div>
@@ -204,27 +240,50 @@ export const PortfolioPage = () => {
           />
         )}
 
+        {riskTab === "backtest" && portfolioId && <BacktestPanel portfolioId={portfolioId} />}
+
         {showOptimizer && portfolioId && <OptimizerPanel portfolioId={portfolioId} />}
 
-        {(showBacktest || riskTab === "backtest") && portfolioId && <BacktestPanel portfolioId={portfolioId} />}
+        <div className="space-y-4">
+          <h2 className="text-base font-semibold text-slate-200">Add position</h2>
+          <form
+            className="flex flex-wrap gap-4 items-end"
+            onSubmit={(e) => {
+              e.preventDefault();
+              addPosition.mutate();
+            }}
+          >
+            <label className="flex flex-col gap-2 text-xs text-text-muted">
+              Ticker
+              <Input value={ticker} onChange={(e) => setTicker(e.target.value.toUpperCase())} className="w-28 font-mono" />
+            </label>
+            <label className="flex flex-col gap-2 text-xs text-text-muted">
+              Quantity
+              <Input value={quantity} onChange={(e) => setQuantity(e.target.value)} className="w-28 font-mono tabular-nums" />
+            </label>
+            <label className="flex flex-col gap-2 text-xs text-text-muted">
+              Purchase price
+              <Input
+                value={purchasePrice}
+                onChange={(e) => setPurchasePrice(e.target.value)}
+                className="w-32 font-mono tabular-nums"
+              />
+            </label>
+            <Button type="submit" variant="outline">
+              Add
+            </Button>
+          </form>
+        </div>
 
-        <h3>Add Position</h3>
-        <form
-          className="row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            addPosition.mutate();
-          }}
-        >
-          <input value={ticker} onChange={(e) => setTicker(e.target.value.toUpperCase())} />
-          <input value={quantity} onChange={(e) => setQuantity(e.target.value)} />
-          <input value={purchasePrice} onChange={(e) => setPurchasePrice(e.target.value)} />
-          <button className="btn" type="submit">
-            Add
-          </button>
-        </form>
-        <h3 className="text-text-primary text-sm font-semibold">Positions</h3>
-        <PositionsTable positions={details.data?.positions ?? []} />
+        <div className="space-y-2">
+          <h2 className="text-base font-semibold text-slate-200">Positions</h2>
+          <PositionsTable
+            positions={details.data?.positions ?? []}
+            onDelete={(id) => {
+              if (window.confirm("Remove this position?")) deletePosition.mutate(id);
+            }}
+          />
+        </div>
       </section>
     </AppShell>
   );

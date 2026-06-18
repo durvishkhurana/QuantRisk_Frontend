@@ -25,7 +25,7 @@ const CountUp = ({ value }: { value: number }) => {
     };
   }, [value, motionValue, rounded]);
 
-  return <motion.span className="font-mono text-[32px] font-semibold text-text-primary">{display}</motion.span>;
+  return <motion.span className="font-mono text-2xl tabular-nums tracking-tight font-semibold text-text-primary">{display}</motion.span>;
 };
 
 const borderClass = (status?: string) => {

@@ -1,14 +1,17 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { getAggregateRisk } from "../api/portfolios";
 import { AppShell } from "../components/layout/AppShell";
+import { RiskTooltip, riskChartGrid } from "../components/risk/RiskTooltip";
+import { Skeleton } from "../components/ui/skeleton";
+import { Button } from "../components/ui/button";
 
 const statusColor = (status: string) => {
-  if (status === "BREACH") return "#FF4444";
-  if (status === "WARNING") return "#f5c542";
-  return "#00FF87";
+  if (status === "BREACH") return "#EF4444";
+  if (status === "WARNING") return "#F59E0B";
+  return "#10B981";
 };
 
 export const AggregateViewPage = () => {
@@ -28,34 +31,43 @@ export const AggregateViewPage = () => {
 
   return (
     <AppShell breadcrumb="Dashboard / Aggregate">
-      <section className="max-w-6xl mx-auto space-y-4">
-        <h2>Aggregate View</h2>
+      <section className="max-w-6xl mx-auto space-y-6">
+        <h1 className="text-3xl font-semibold text-slate-50 tracking-tight">Aggregate View</h1>
         {isLoading || !data ? (
-          <p className="muted">Loading aggregate risk…</p>
+          <div className="grid md:grid-cols-3 gap-4">
+            <Skeleton className="h-24" />
+            <Skeleton className="h-24" />
+            <Skeleton className="h-24" />
+          </div>
         ) : (
           <>
-            <div className="risk-metric-grid three">
-              <div className="risk-metric-card">
-                <div className="risk-metric-label">Total Value</div>
-                <div className="risk-metric-value mono">${Math.round(data.total_portfolio_value).toLocaleString()}</div>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="terminal-card p-4">
+                <p className="text-xs uppercase tracking-widest text-text-muted mb-2">Total Value</p>
+                <p className="font-mono text-2xl tabular-nums tracking-tight text-text-primary">
+                  ${Math.round(data.total_portfolio_value).toLocaleString()}
+                </p>
               </div>
-              <div className="risk-metric-card">
-                <div className="risk-metric-label">Aggregate VaR (95%)</div>
-                <div className="risk-metric-value mono accent">${Math.round(data.aggregate_var_95).toLocaleString()}</div>
+              <div className="terminal-card p-4">
+                <p className="text-xs uppercase tracking-widest text-text-muted mb-2">Aggregate VaR (95%)</p>
+                <p className="font-mono text-2xl tabular-nums tracking-tight text-accent-cyan">
+                  ${Math.round(data.aggregate_var_95).toLocaleString()}
+                </p>
               </div>
-              <div className="risk-metric-card">
-                <div className="risk-metric-label">Portfolios</div>
-                <div className="risk-metric-value mono">{data.portfolio_count}</div>
+              <div className="terminal-card p-4">
+                <p className="text-xs uppercase tracking-widest text-text-muted mb-2">Portfolios</p>
+                <p className="font-mono text-2xl tabular-nums tracking-tight text-text-primary">{data.portfolio_count}</p>
               </div>
             </div>
-            <div className="grid two">
-              <div className="card chart">
-                <h3>VaR by Portfolio</h3>
+            <div className="grid lg:grid-cols-2 gap-4">
+              <div className="terminal-card p-4">
+                <h2 className="text-base font-semibold text-slate-200 mb-4">VaR by Portfolio</h2>
                 <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={data.breakdown}>
-                    <XAxis dataKey="name" tick={{ fill: "#9aa0b5", fontSize: 11 }} />
-                    <YAxis tick={{ fill: "#9aa0b5" }} />
-                    <Tooltip contentStyle={{ background: "#0f1923", border: "1px solid #2a2a3d" }} />
+                    <CartesianGrid {...riskChartGrid} vertical={false} />
+                    <XAxis dataKey="name" tick={{ fill: "#94A3B8", fontSize: 11 }} />
+                    <YAxis tick={{ fill: "#94A3B8", fontSize: 11 }} />
+                    <Tooltip content={<RiskTooltip valueLabel="VaR 95" />} />
                     <Bar dataKey="var_95">
                       {data.breakdown.map((entry) => (
                         <Cell key={entry.portfolio_id} fill={statusColor(entry.margin_status)} />
@@ -64,56 +76,62 @@ export const AggregateViewPage = () => {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="card chart">
-                <h3>Value Share</h3>
+              <div className="terminal-card p-4">
+                <h2 className="text-base font-semibold text-slate-200 mb-4">Value Share</h2>
                 <ResponsiveContainer width="100%" height={280}>
                   <PieChart>
-                    <Pie data={pieData} dataKey="value" nameKey="name" innerRadius={60} outerRadius={100} fill="#00FF87" />
-                    <Tooltip contentStyle={{ background: "#0f1923", border: "1px solid #2a2a3d" }} />
+                    <Pie data={pieData} dataKey="value" nameKey="name" innerRadius={60} outerRadius={100} fill="#10B981" />
+                    <Tooltip content={<RiskTooltip valueLabel="Value" />} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
             </div>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>
-                    <button type="button" className="linkish" onClick={() => setSortKey("name")}>
-                      Portfolio
-                    </button>
-                  </th>
-                  <th>
-                    <button type="button" className="linkish" onClick={() => setSortKey("value")}>
-                      Value
-                    </button>
-                  </th>
-                  <th>
-                    <button type="button" className="linkish" onClick={() => setSortKey("var_95")}>
-                      VaR
-                    </button>
-                  </th>
-                  <th>VaR % of value</th>
-                  <th>Status</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((row) => (
-                  <tr key={row.portfolio_id}>
-                    <td>{row.name}</td>
-                    <td className="mono">${Math.round(row.value).toLocaleString()}</td>
-                    <td className="mono">${Math.round(row.var_95).toLocaleString()}</td>
-                    <td className="mono">{((row.var_95 / Math.max(row.value, 1)) * 100).toFixed(2)}%</td>
-                    <td>
-                      <span className={`action-badge ${row.margin_status.toLowerCase()}`}>{row.margin_status}</span>
-                    </td>
-                    <td>
-                      <Link to={`/portfolio/${row.portfolio_id}`}>Open</Link>
-                    </td>
+            <div className="terminal-card overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-xs uppercase tracking-widest text-text-muted border-b border-border">
+                    <th className="text-left py-3 px-4">
+                      <button type="button" className="hover:text-text-primary" onClick={() => setSortKey("name")}>
+                        Name
+                      </button>
+                    </th>
+                    <th className="text-right py-3 px-4">
+                      <button type="button" className="hover:text-text-primary" onClick={() => setSortKey("value")}>
+                        Value
+                      </button>
+                    </th>
+                    <th className="text-right py-3 px-4">
+                      <button type="button" className="hover:text-text-primary" onClick={() => setSortKey("var_95")}>
+                        VaR 95
+                      </button>
+                    </th>
+                    <th className="text-right py-3 px-4">Status</th>
+                    <th className="text-right py-3 px-4" />
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {sorted.map((row) => (
+                    <tr key={row.portfolio_id} className="border-b border-border/50 hover:bg-bg-tertiary/40">
+                      <td className="py-3 px-4 text-text-primary">{row.name}</td>
+                      <td className="py-3 px-4 text-right font-mono tabular-nums">
+                        ${Math.round(Number(row.value)).toLocaleString()}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono tabular-nums text-accent-cyan">
+                        ${Math.round(Number(row.var_95)).toLocaleString()}
+                      </td>
+                      <td className="py-3 px-4 text-right text-xs font-semibold uppercase">{row.margin_status}</td>
+                      <td className="py-3 px-4 text-right">
+                        <Link to={`/portfolio/${row.portfolio_id}`}>
+                          <Button variant="outline" className="py-1 px-3 text-xs">
+                            Open
+                          </Button>
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </>
         )}
       </section>
