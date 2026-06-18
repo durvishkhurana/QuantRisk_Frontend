@@ -28,9 +28,9 @@ type RiskTab = "overview" | "monte-carlo" | "backtest";
 
 const tabClass = (active: boolean) =>
   cn(
-    "px-4 py-2 text-sm rounded-lg border transition-colors",
+    "px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded border transition-colors",
     active
-      ? "bg-bg-tertiary border-accent-cyan/40 text-text-primary"
+      ? "bg-bg-tertiary border-accent-gold/25 text-accent-gold shadow-gold"
       : "border-transparent text-text-secondary hover:bg-bg-tertiary hover:text-text-primary",
   );
 
@@ -42,6 +42,12 @@ export const PortfolioPage = () => {
   const [purchasePrice, setPurchasePrice] = useState("100");
   const [showOptimizer, setShowOptimizer] = useState(false);
   const [riskTab, setRiskTab] = useState<RiskTab>("overview");
+  
+  // Portfolio settings edit state
+  const [isEditingPortfolio, setIsEditingPortfolio] = useState(false);
+  const [editPortName, setEditPortName] = useState("");
+  const [editPortLimit, setEditPortLimit] = useState("");
+
   const queryClient = useQueryClient();
 
   const details = useQuery({
@@ -68,6 +74,9 @@ export const PortfolioPage = () => {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["portfolio", portfolioId] });
       toast.success("Position added");
+      setTicker("");
+      setQuantity("10");
+      setPurchasePrice("100");
     },
     onError: () => toast.error("Could not add position"),
   });
@@ -81,6 +90,19 @@ export const PortfolioPage = () => {
     onError: () => toast.error("Could not remove position"),
   });
 
+  const patchPosition = useMutation({
+    mutationFn: async ({ positionId, quantity, purchasePrice }: { positionId: string; quantity: number; purchasePrice: number }) =>
+      api.patch(`/portfolios/${portfolioId}/positions/${positionId}`, {
+        quantity,
+        purchase_price: purchasePrice,
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["portfolio", portfolioId] });
+      toast.success("Position updated");
+    },
+    onError: () => toast.error("Could not update position"),
+  });
+
   const deletePortfolio = useMutation({
     mutationFn: async () => api.delete(`/portfolios/${portfolioId}`),
     onSuccess: async () => {
@@ -89,6 +111,21 @@ export const PortfolioPage = () => {
       navigate("/dashboard");
     },
     onError: () => toast.error("Could not delete portfolio"),
+  });
+
+  const patchPortfolio = useMutation({
+    mutationFn: async () =>
+      api.patch(`/portfolios/${portfolioId}`, {
+        name: editPortName,
+        margin_limit: Number(editPortLimit),
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["portfolio", portfolioId] });
+      await queryClient.invalidateQueries({ queryKey: ["portfolios"] });
+      setIsEditingPortfolio(false);
+      toast.success("Portfolio settings updated");
+    },
+    onError: () => toast.error("Could not update portfolio settings"),
   });
 
   const compute = useMutation({
@@ -134,24 +171,38 @@ export const PortfolioPage = () => {
 
   const { connected } = useMarginAlerts(portfolioId, onAlert);
 
+  const openEditModal = () => {
+    if (details.data) {
+      setEditPortName(details.data.name);
+      setEditPortLimit(String(details.data.margin_limit));
+      setIsEditingPortfolio(true);
+    }
+  };
+
   const riskLoading = risk.isLoading || compute.isPending;
 
   return (
     <AppShell breadcrumb={`Dashboard / ${details.data?.name ?? "Portfolio"}`} wsConnected={connected}>
       <section className="max-w-6xl mx-auto space-y-6">
-        <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-4 border-b border-white/[0.04]">
           <div>
-            <h1 className="text-3xl font-semibold text-slate-50 tracking-tight">{details.data?.name ?? "Portfolio"}</h1>
-            <p className="text-text-secondary text-sm font-mono tabular-nums mt-1">
-              Total value: ${Math.round(details.data?.total_value ?? 0).toLocaleString()}
+            <h1 className="text-xl font-bold text-text-primary tracking-tight font-sans">
+              {details.data?.name ?? "Portfolio"}
+            </h1>
+            <p className="text-text-muted text-[10px] font-mono uppercase tracking-widest mt-1">
+              Assets Value: <span className="text-text-primary font-semibold">${Math.round(details.data?.total_value ?? 0).toLocaleString()}</span>
+              {" | "} Limit: <span className="text-accent-gold font-semibold">{(Number(details.data?.margin_limit ?? 0.05) * 100).toFixed(1)}%</span>
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => compute.mutate()} disabled={compute.isPending}>
-              {compute.isPending ? "Computing…" : "Compute Risk Now"}
+              {compute.isPending ? "Computing…" : "Compute Risk"}
             </Button>
             <Button variant="outline" onClick={() => setShowOptimizer((v) => !v)}>
-              {showOptimizer ? "Hide Optimizer" : "Optimize Portfolio"}
+              {showOptimizer ? "Hide Optimizer" : "Optimize"}
+            </Button>
+            <Button variant="outline" onClick={openEditModal}>
+              Edit settings
             </Button>
             <Button
               variant="danger"
@@ -159,14 +210,14 @@ export const PortfolioPage = () => {
                 if (window.confirm("Delete this portfolio and all its history?")) deletePortfolio.mutate();
               }}
             >
-              Delete
+              Delete Fund
             </Button>
           </div>
         </div>
 
         {portfolioId && <RiskNarrative portfolioId={portfolioId} narrative={risk.data?.risk_narrative} />}
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-1.5 border-b border-white/[0.04] pb-px">
           <button type="button" className={tabClass(riskTab === "overview")} onClick={() => setRiskTab("overview")}>
             Overview
           </button>
@@ -179,10 +230,9 @@ export const PortfolioPage = () => {
         </div>
 
         {riskTab === "overview" && (
-          <>
+          <div className="space-y-6">
             {riskLoading && !risk.data ? (
-              <div className="grid md:grid-cols-3 gap-4">
-                <Skeleton className="h-28" />
+              <div className="grid md:grid-cols-2 gap-4">
                 <Skeleton className="h-28" />
                 <Skeleton className="h-28" />
               </div>
@@ -193,33 +243,37 @@ export const PortfolioPage = () => {
                 marginStatus={risk.data.margin_status}
               />
             ) : (
-              <div className="terminal-card p-6 text-sm text-text-secondary">
-                No risk computation yet. Add positions and click <strong className="text-text-primary">Compute Risk Now</strong>.
+              <div className="terminal-card p-6 text-xs text-text-secondary">
+                No risk computation records found. Populate holdings and click <strong className="text-text-primary">Compute Risk</strong> to start.
               </div>
             )}
-            <div className="grid md:grid-cols-2 gap-4">
+            
+            <div className="grid md:grid-cols-2 gap-6">
               {risk.data ? (
                 <MarginGauge
                   utilization={Number(risk.data.margin_utilization)}
                   marginLimit={Number(details.data?.margin_limit ?? 0.05)}
                 />
               ) : null}
-              <div className="terminal-card p-4">
-                <h2 className="text-xs uppercase tracking-widest text-text-muted mb-4">SHAP attribution</h2>
+              <div className="terminal-card p-5">
+                <h2 className="text-[10px] uppercase tracking-wider font-semibold text-text-muted mb-4">SHAP Attribution</h2>
                 <ShapWaterfall items={topShap} />
               </div>
             </div>
-            <div className="grid md:grid-cols-2 gap-4">
+            
+            <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <h2 className="text-xs uppercase tracking-widest text-text-muted mb-2">VaR trend (30d)</h2>
+                <h2 className="text-[10px] uppercase tracking-wider font-semibold text-text-muted mb-2">VaR Trend (30d)</h2>
                 <VaRTrendChart history={history.data ?? []} />
               </div>
-              <div className="terminal-card p-4">
-                <h2 className="text-xs uppercase tracking-widest text-text-muted mb-4">Stress scenarios</h2>
+              <div className="terminal-card p-5">
+                <h2 className="text-[10px] uppercase tracking-wider font-semibold text-text-muted mb-4">Stress Scenarios</h2>
                 <StressTestPanel stress={risk.data?.stress_tests} />
               </div>
             </div>
+            
             <CorrelationMatrix data={correlation.data} />
+            
             {portfolioId && (
               <VolatilityForecastPanel
                 portfolioId={portfolioId}
@@ -228,7 +282,7 @@ export const PortfolioPage = () => {
                 adjustedVar95Portfolio={risk.data?.adjusted_var_95_portfolio}
               />
             )}
-          </>
+          </div>
         )}
 
         {riskTab === "monte-carlo" && (
@@ -244,46 +298,85 @@ export const PortfolioPage = () => {
 
         {showOptimizer && portfolioId && <OptimizerPanel portfolioId={portfolioId} />}
 
-        <div className="space-y-4">
-          <h2 className="text-base font-semibold text-slate-200">Add position</h2>
-          <form
-            className="flex flex-wrap gap-4 items-end"
-            onSubmit={(e) => {
-              e.preventDefault();
-              addPosition.mutate();
-            }}
-          >
-            <label className="flex flex-col gap-2 text-xs text-text-muted">
-              Ticker
-              <Input value={ticker} onChange={(e) => setTicker(e.target.value.toUpperCase())} className="w-28 font-mono" />
-            </label>
-            <label className="flex flex-col gap-2 text-xs text-text-muted">
-              Quantity
-              <Input value={quantity} onChange={(e) => setQuantity(e.target.value)} className="w-28 font-mono tabular-nums" />
-            </label>
-            <label className="flex flex-col gap-2 text-xs text-text-muted">
-              Purchase price
-              <Input
-                value={purchasePrice}
-                onChange={(e) => setPurchasePrice(e.target.value)}
-                className="w-32 font-mono tabular-nums"
-              />
-            </label>
-            <Button type="submit" variant="outline">
-              Add
-            </Button>
-          </form>
+        <div className="grid md:grid-cols-[1fr_2fr] gap-6 pt-4 border-t border-white/[0.04]">
+          <div className="space-y-4 bg-[#070b13] p-5 rounded border border-white/[0.04]">
+            <h2 className="text-xs uppercase tracking-wider font-bold text-text-primary">Add Position</h2>
+            <form
+              className="flex flex-col gap-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                addPosition.mutate();
+              }}
+            >
+              <div className="space-y-1">
+                <span className="text-[9px] uppercase tracking-wider font-semibold text-text-muted">Ticker Symbol</span>
+                <Input value={ticker} onChange={(e) => setTicker(e.target.value.toUpperCase())} className="w-full" required />
+              </div>
+              <div className="space-y-1">
+                <span className="text-[9px] uppercase tracking-wider font-semibold text-text-muted">Quantity</span>
+                <Input value={quantity} onChange={(e) => setQuantity(e.target.value)} className="w-full" required />
+              </div>
+              <div className="space-y-1">
+                <span className="text-[9px] uppercase tracking-wider font-semibold text-text-muted">Purchase Cost basis</span>
+                <Input
+                  value={purchasePrice}
+                  onChange={(e) => setPurchasePrice(e.target.value)}
+                  className="w-full"
+                  required
+                />
+              </div>
+              <Button type="submit" variant="default" disabled={addPosition.isPending} className="w-full mt-2">
+                {addPosition.isPending ? "Adding…" : "Add Position"}
+              </Button>
+            </form>
+          </div>
+
+          <div className="space-y-3">
+            <h2 className="text-xs uppercase tracking-wider font-bold text-text-primary">Current Holdings</h2>
+            <PositionsTable
+              positions={details.data?.positions ?? []}
+              onDelete={(id) => {
+                if (window.confirm("Remove this position?")) deletePosition.mutate(id);
+              }}
+              onEdit={async (id, qty, price) => {
+                await patchPosition.mutateAsync({ positionId: id, quantity: qty, purchasePrice: price });
+              }}
+            />
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <h2 className="text-base font-semibold text-slate-200">Positions</h2>
-          <PositionsTable
-            positions={details.data?.positions ?? []}
-            onDelete={(id) => {
-              if (window.confirm("Remove this position?")) deletePosition.mutate(id);
-            }}
-          />
-        </div>
+        {/* Edit Portfolio Settings Modal */}
+        {isEditingPortfolio && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+            <div className="w-full max-w-[400px] gold-panel p-6 border border-accent-gold/20 bg-[#0a0e14] shadow-2xl">
+              <h3 className="text-text-primary text-xs font-bold uppercase tracking-wider mb-4 pb-2 border-b border-white/[0.04]">Portfolio Settings</h3>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  patchPortfolio.mutate();
+                }}
+                className="space-y-4"
+              >
+                <div className="space-y-1">
+                  <label className="text-[9px] uppercase tracking-wider text-text-muted font-semibold">Fund Name</label>
+                  <Input value={editPortName} onChange={(e) => setEditPortName(e.target.value)} required />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] uppercase tracking-wider text-text-muted font-semibold">Margin Limit (VaR Cap %)</label>
+                  <Input value={editPortLimit} onChange={(e) => setEditPortLimit(e.target.value)} required />
+                </div>
+                <div className="flex gap-2 justify-end pt-3 border-t border-white/[0.04]">
+                  <Button type="button" variant="ghost" onClick={() => setIsEditingPortfolio(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={patchPortfolio.isPending}>
+                    {patchPortfolio.isPending ? "Saving…" : "Save changes"}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </section>
     </AppShell>
   );

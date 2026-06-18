@@ -3,7 +3,7 @@ import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis
 type Item = { ticker: string; contribution: number; pct_of_var?: number };
 
 export const ShapWaterfall = ({ items, maxItems = 12, height = 240 }: { items: Item[]; maxItems?: number; height?: number }) => {
-  if (!items.length) return <p className="text-text-muted text-sm">No SHAP data yet.</p>;
+  if (!items.length) return <p className="text-text-muted text-xs">No SHAP attribution records.</p>;
   const data = items.slice(0, maxItems).map((x) => ({
     ticker: x.ticker,
     contribution: Number(x.contribution),
@@ -12,30 +12,30 @@ export const ShapWaterfall = ({ items, maxItems = 12, height = 240 }: { items: I
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <BarChart data={data} layout={vertical ? "vertical" : "horizontal"} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
-        <CartesianGrid stroke="#1E2D40" horizontal vertical={false} />
+      <BarChart data={data} layout={vertical ? "vertical" : "horizontal"} margin={{ left: 0, right: 0, top: 4, bottom: 4 }}>
+        <CartesianGrid stroke="rgba(255, 255, 255, 0.03)" strokeDasharray="3 3" horizontal vertical={false} />
         <XAxis
           type={vertical ? "number" : "category"}
           dataKey={vertical ? undefined : "ticker"}
-          tick={{ fill: "#8899AA", fontSize: 11 }}
-          angle={vertical ? 0 : -65}
+          tick={{ fill: "#64748b", fontSize: 9, fontFamily: "Inter" }}
+          angle={vertical ? 0 : -45}
           textAnchor={vertical ? "end" : "end"}
-          height={vertical ? 30 : 70}
+          height={vertical ? 30 : 50}
         />
         <YAxis
           type={vertical ? "category" : "number"}
           dataKey={vertical ? "ticker" : undefined}
-          tick={{ fill: "#E8EFF7", fontSize: 12, fontFamily: "JetBrains Mono" }}
-          width={vertical ? 56 : 48}
+          tick={{ fill: "#cbd5e1", fontSize: 9, fontFamily: "JetBrains Mono" }}
+          width={vertical ? 48 : 40}
         />
         <Tooltip
-          contentStyle={{ background: "#0F1923", border: "1px solid #1E2D40", color: "#E8EFF7" }}
+          contentStyle={{ background: "#0a0e14", border: "1px solid rgba(255, 255, 255, 0.05)", borderRadius: "4px" }}
           formatter={(value: number) => [`$${Math.round(value).toLocaleString()}`, "Contribution"]}
-          labelStyle={{ color: "#8899AA", fontSize: 11 }}
+          labelStyle={{ color: "#64748b", fontSize: 9, fontFamily: "Inter" }}
         />
-        <Bar dataKey="contribution" radius={[2, 2, 0, 0]}>
+        <Bar dataKey="contribution" radius={vertical ? [0, 2, 2, 0] : [2, 2, 0, 0]}>
           {data.map((entry) => (
-            <Cell key={entry.ticker} fill={entry.contribution >= 0 ? "rgba(255,68,68,0.8)" : "rgba(0,255,135,0.8)"} />
+            <Cell key={entry.ticker} fill={entry.contribution >= 0 ? "#dc2626" : "#10b981"} />
           ))}
         </Bar>
       </BarChart>

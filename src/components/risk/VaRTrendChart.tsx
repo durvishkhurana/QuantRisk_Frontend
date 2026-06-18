@@ -32,14 +32,14 @@ export const VaRTrendChart = ({
         <ComposedChart data={data}>
           <defs>
             <linearGradient id="varFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#0EA5E9" stopOpacity={0.2} />
-              <stop offset="100%" stopColor="#0EA5E9" stopOpacity={0} />
+              <stop offset="0%" stopColor="#dfc399" stopOpacity={0.15} />
+              <stop offset="100%" stopColor="#dfc399" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid {...riskChartGrid} horizontal vertical={false} />
-          <XAxis dataKey="label" tick={{ fill: "#94A3B8", fontSize: 10, fontFamily: "Inter" }} />
+          <CartesianGrid {...riskChartGrid} stroke="rgba(255,255,255,0.03)" horizontal vertical={false} />
+          <XAxis dataKey="label" tick={{ fill: "#64748b", fontSize: 9, fontFamily: "Inter" }} />
           <YAxis
-            tick={{ fill: "#94A3B8", fontSize: 10, fontFamily: "JetBrains Mono" }}
+            tick={{ fill: "#64748b", fontSize: 9, fontFamily: "JetBrains Mono" }}
             tickFormatter={(v) => `$${Math.round(Number(v) / 1000)}k`}
           />
           <Tooltip content={<RiskTooltip valueLabel="VaR 95" />} />
@@ -47,13 +47,13 @@ export const VaRTrendChart = ({
           <Line
             type="monotone"
             dataKey="var95"
-            stroke="#0EA5E9"
-            strokeWidth={2}
+            stroke="#dfc399"
+            strokeWidth={1.5}
             dot={false}
-            activeDot={{ r: 4, fill: "#0EA5E9" }}
+            activeDot={{ r: 3.5, fill: "#dfc399", stroke: "#0a0e14", strokeWidth: 1.5 }}
           />
           {marginLimitValue != null && (
-            <ReferenceLine y={marginLimitValue} stroke="#EF4444" strokeDasharray="4 4" />
+            <ReferenceLine y={marginLimitValue} stroke="#dc2626" strokeDasharray="3 3" />
           )}
         </ComposedChart>
       </ResponsiveContainer>

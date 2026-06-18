@@ -25,31 +25,31 @@ const CountUp = ({ value }: { value: number }) => {
     };
   }, [value, motionValue, rounded]);
 
-  return <motion.span className="font-mono text-2xl tabular-nums tracking-tight font-semibold text-text-primary">{display}</motion.span>;
+  return <motion.span className="font-mono text-2xl tabular-nums tracking-tight font-bold text-text-primary">{display}</motion.span>;
 };
 
 const borderClass = (status?: string) => {
-  if (status === "BREACH") return "border-l-2 border-danger/40";
-  if (status === "WARNING") return "border-l-2 border-warning/40";
-  return "border-l-2 border-accent-green/40";
+  if (status === "BREACH") return "border-l-2 border-danger bg-danger/[0.02]";
+  if (status === "WARNING") return "border-l-2 border-warning bg-warning/[0.02]";
+  return "border-l-2 border-accent-green bg-accent-green/[0.02]";
 };
 
 export const RiskMetricCard = ({ historicalVar, monteCarloVar, label = "VaR (95%)", marginStatus }: Props) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-    <div className={`terminal-card p-4 ${borderClass(marginStatus)}`}>
-      <p className="text-[11px] uppercase tracking-[0.15em] text-text-secondary font-sans">
-        Historical {label}
-        <span className="ml-1 text-text-muted cursor-help" title="Historical simulation uses the last 252 days of actual returns.">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className={`terminal-card p-5 ${borderClass(marginStatus)}`}>
+      <p className="text-[9px] uppercase tracking-wider font-semibold text-text-muted mb-2 font-sans flex items-center gap-1.5">
+        Historical Simulation {label}
+        <span className="text-text-muted/60 cursor-help font-normal" title="Historical simulation uses the last 252 days of actual returns.">
           ⓘ
         </span>
       </p>
       <CountUp value={historicalVar} />
     </div>
-    <div className={`terminal-card p-4 ${borderClass(marginStatus)}`}>
-      <p className="text-[11px] uppercase tracking-[0.15em] text-text-secondary font-sans">
-        Monte Carlo {label}
+    <div className={`terminal-card p-5 ${borderClass(marginStatus)}`}>
+      <p className="text-[9px] uppercase tracking-wider font-semibold text-text-muted mb-2 font-sans flex items-center gap-1.5">
+        Monte Carlo Simulation {label}
         <span
-          className="ml-1 text-text-muted cursor-help"
+          className="text-text-muted/60 cursor-help font-normal"
           title="Monte Carlo simulates 10,000 multivariate-normal return paths from estimated parameters."
         >
           ⓘ
@@ -58,7 +58,7 @@ export const RiskMetricCard = ({ historicalVar, monteCarloVar, label = "VaR (95%
       {monteCarloVar != null ? (
         <CountUp value={monteCarloVar} />
       ) : (
-        <span className="font-mono text-[32px] font-semibold text-text-muted">—</span>
+        <span className="font-mono text-2xl font-bold text-text-muted">—</span>
       )}
     </div>
   </div>

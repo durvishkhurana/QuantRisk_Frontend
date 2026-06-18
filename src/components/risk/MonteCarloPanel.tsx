@@ -18,28 +18,35 @@ export const MonteCarloPanel = ({ histogram, var95Fraction, skewness = 0, kurtos
     })) ?? [];
 
   return (
-    <div className="card chart">
-      <h3>Monte Carlo Return Distribution</h3>
-      <p className="muted small">Based on 10,000 simulated scenarios</p>
+    <div className="terminal-card p-5 space-y-4 shadow-lg shadow-black/25">
+      <div>
+        <h3 className="text-xs uppercase tracking-wider font-bold text-text-primary">Monte Carlo Return Distribution</h3>
+        <p className="text-text-muted text-[10px] uppercase tracking-wider mt-1">Based on 10,000 simulated multivariate normal paths</p>
+      </div>
+      
       {chartData.length ? (
         <ResponsiveContainer width="100%" height={260}>
-          <BarChart data={chartData}>
-            <CartesianGrid stroke="#1f1f2e" />
-            <XAxis dataKey="label" tick={{ fill: "#9aa0b5", fontSize: 10 }} interval={4} />
-            <YAxis tick={{ fill: "#9aa0b5", fontSize: 11 }} />
-            <Tooltip contentStyle={{ background: "#0f1923", border: "1px solid #2a2a3d" }} />
-            <Bar dataKey="count" fill="#00FF87" opacity={0.75} />
+          <BarChart data={chartData} margin={{ left: 0, right: 0 }}>
+            <CartesianGrid stroke="rgba(255, 255, 255, 0.03)" strokeDasharray="3 3" horizontal vertical={false} />
+            <XAxis dataKey="label" tick={{ fill: "#64748b", fontSize: 9 }} interval={4} />
+            <YAxis tick={{ fill: "#64748b", fontSize: 9, fontFamily: "JetBrains Mono" }} />
+            <Tooltip contentStyle={{ background: "#0a0e14", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "4px" }} />
+            <Bar dataKey="count" fill="#2563eb" opacity={0.7} radius={[1, 1, 0, 0]} />
             {var95Fraction != null && (
-              <ReferenceLine x={`${(var95Fraction * 100).toFixed(1)}%`} stroke="#FF4444" strokeDasharray="4 4" />
+              <ReferenceLine x={`${(var95Fraction * 100).toFixed(1)}%`} stroke="#dc2626" strokeDasharray="3 3" />
             )}
           </BarChart>
         </ResponsiveContainer>
       ) : (
-        <p className="muted">Run a risk computation to populate the Monte Carlo histogram.</p>
+        <p className="text-text-muted text-xs font-sans py-8">Run a risk computation to populate the Monte Carlo histogram.</p>
       )}
-      <div className="stat-badges">
-        <span className="badge">Skewness: <strong className="mono">{skewness.toFixed(2)}</strong></span>
-        <span className="badge">Kurtosis: <strong className="mono">{kurtosis.toFixed(2)}</strong></span>
+      <div className="flex gap-2">
+        <span className="px-2 py-0.5 rounded border border-white/[0.04] bg-white/[0.01] text-[10px] font-mono text-text-secondary">
+          Skewness: <strong className="text-text-primary">{skewness.toFixed(2)}</strong>
+        </span>
+        <span className="px-2 py-0.5 rounded border border-white/[0.04] bg-white/[0.01] text-[10px] font-mono text-text-secondary">
+          Kurtosis: <strong className="text-text-primary">{kurtosis.toFixed(2)}</strong>
+        </span>
       </div>
     </div>
   );

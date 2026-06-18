@@ -16,6 +16,7 @@ import { AlertFeed, AlertItem } from "../components/alerts/AlertFeed";
 import { AppShell } from "../components/layout/AppShell";
 import { resolveWebSocketBase } from "../lib/apiBase";
 import { ShapWaterfall } from "../components/risk/ShapWaterfall";
+import { Button } from "../components/ui/button";
 
 const PAGE_SIZE = 20;
 
@@ -26,15 +27,15 @@ const EVENT_TYPE_OPTIONS: { value: AlertEventType; label: string }[] = [
 ];
 
 const badgeClass = (eventType: string) => {
-  if (eventType === "BREACH") return "bg-danger/20 text-danger border-danger/40";
-  if (eventType === "WARNING") return "bg-warning/20 text-warning border-warning/40";
-  if (eventType === "CORRELATION_ALERT") return "bg-orange-500/20 text-orange-400 border-orange-500/40";
-  return "bg-bg-tertiary text-text-secondary border-border";
+  if (eventType === "BREACH" || eventType === "MARGIN_BREACH") return "bg-danger/10 text-danger border-danger/20";
+  if (eventType === "WARNING" || eventType === "MARGIN_WARNING") return "bg-warning/10 text-warning border-warning/20";
+  if (eventType === "CORRELATION_ALERT") return "bg-amber-600/10 text-amber-400 border-amber-600/20";
+  return "bg-bg-tertiary text-text-secondary border-white/[0.04]";
 };
 
 const badgeLabel = (eventType: string) => {
-  if (eventType === "BREACH") return "BREACH";
-  if (eventType === "WARNING") return "WARNING";
+  if (eventType === "BREACH" || eventType === "MARGIN_BREACH") return "BREACH";
+  if (eventType === "WARNING" || eventType === "MARGIN_WARNING") return "WARNING";
   if (eventType === "CORRELATION_ALERT") return "CORRELATION";
   return eventType;
 };
@@ -173,44 +174,40 @@ export const AlertsPage = () => {
 
   return (
     <AppShell breadcrumb="Dashboard / Alerts">
-      <section className="max-w-6xl mx-auto space-y-4">
-        <div>
-          <h2 className="text-text-primary text-lg font-semibold">Live alert feed</h2>
-          <p className="text-text-secondary text-xs">Streaming updates from your portfolios</p>
-        </div>
-        <AlertFeed items={tickerItems} highlightId={highlightId} />
-        {tickerItems[0] ? (
-          <button
-            type="button"
-            className="text-xs text-accent-cyan"
-            onClick={() => setHighlightId(tickerItems[0].id)}
-          >
-            Preview breach animation
-          </button>
-        ) : null}
-
-        <div className="flex flex-wrap items-end justify-between gap-3 pt-2">
+      <section className="max-w-6xl mx-auto space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-4 border-b border-white/[0.04]">
           <div>
-            <h2 className="text-text-primary text-lg font-semibold">Alert history</h2>
-            <p className="text-text-secondary text-xs">
-              {isFetching ? "Refreshing…" : `${total} event${total === 1 ? "" : "s"}`}
-            </p>
+            <h2 className="text-xl font-bold text-text-primary tracking-tight font-sans">Risk Alerts Ticker</h2>
+            <p className="text-text-muted text-[11px] uppercase tracking-wider mt-1">Real-time alerts stream and acknowledgment history</p>
           </div>
-          <button
-            type="button"
-            className="px-4 py-2 rounded-terminal border border-border text-text-primary text-sm hover:border-accent-cyan disabled:opacity-50"
-            onClick={onExport}
-            disabled={exporting}
-          >
-            {exporting ? "Exporting…" : "Export CSV"}
-          </button>
+          <div className="flex gap-2">
+            {tickerItems[0] ? (
+              <Button
+                variant="outline"
+                className="py-1 px-3 text-[10px]"
+                onClick={() => setHighlightId(tickerItems[0].id)}
+              >
+                Test Alert Flash
+              </Button>
+            ) : null}
+            <Button
+              variant="outline"
+              onClick={onExport}
+              disabled={exporting}
+              className="py-1 px-4 text-[10px]"
+            >
+              {exporting ? "Exporting…" : "Export CSV"}
+            </Button>
+          </div>
         </div>
 
-        <div className="terminal-card p-4 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-          <label className="flex flex-col gap-1 text-xs text-text-muted">
-            Portfolio
+        <AlertFeed items={tickerItems} highlightId={highlightId} />
+
+        <div className="gold-panel p-5 grid gap-4 md:grid-cols-2 lg:grid-cols-4 border border-accent-gold/10 bg-[#070b13]/60 shadow-lg shadow-black/25">
+          <label className="flex flex-col gap-1 text-[9px] uppercase tracking-wider font-semibold text-text-muted">
+            Portfolio Fund
             <select
-              className="bg-bg-tertiary border border-border rounded-terminal px-3 py-2 text-sm text-text-primary"
+              className="bg-[#05070c] border border-white/[0.06] rounded px-3 py-2 text-xs font-mono text-text-primary focus:outline-none focus:border-accent-gold/40"
               value={portfolioFilter}
               onChange={(e) => {
                 setPage(1);
@@ -225,11 +222,11 @@ export const AlertsPage = () => {
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-xs text-text-muted">
+          <label className="flex flex-col gap-1 text-[9px] uppercase tracking-wider font-semibold text-text-muted">
             From date
             <input
               type="date"
-              className="bg-bg-tertiary border border-border rounded-terminal px-3 py-2 text-sm text-text-primary"
+              className="bg-[#05070c] border border-white/[0.06] rounded px-3 py-2 text-xs font-mono text-text-primary focus:outline-none focus:border-accent-gold/40"
               value={fromDate}
               onChange={(e) => {
                 setPage(1);
@@ -237,11 +234,11 @@ export const AlertsPage = () => {
               }}
             />
           </label>
-          <label className="flex flex-col gap-1 text-xs text-text-muted">
+          <label className="flex flex-col gap-1 text-[9px] uppercase tracking-wider font-semibold text-text-muted">
             To date
             <input
               type="date"
-              className="bg-bg-tertiary border border-border rounded-terminal px-3 py-2 text-sm text-text-primary"
+              className="bg-[#05070c] border border-white/[0.06] rounded px-3 py-2 text-xs font-mono text-text-primary focus:outline-none focus:border-accent-gold/40"
               value={toDate}
               onChange={(e) => {
                 setPage(1);
@@ -249,14 +246,14 @@ export const AlertsPage = () => {
               }}
             />
           </label>
-          <div className="flex flex-col gap-2 text-xs text-text-muted">
+          <div className="flex flex-col gap-2 text-[9px] uppercase tracking-wider font-semibold text-text-muted">
             Event type
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1.5">
               {EVENT_TYPE_OPTIONS.map((opt) => (
-                <label key={opt.value} className="inline-flex items-center gap-1.5 text-text-secondary text-xs">
+                <label key={opt.value} className="inline-flex items-center gap-1.5 text-text-secondary text-[10px] font-sans lowercase font-semibold first-letter:uppercase">
                   <input
                     type="checkbox"
-                    className="accent-accent-cyan"
+                    className="accent-accent-gold rounded border-white/10"
                     checked={selectedTypes.includes(opt.value)}
                     onChange={() => toggleType(opt.value)}
                   />
@@ -267,32 +264,32 @@ export const AlertsPage = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto terminal-card">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto terminal-card shadow-md shadow-black/20">
+          <table className="w-full text-xs text-left">
             <thead>
-              <tr className="text-[11px] uppercase tracking-wider text-text-muted border-b border-border">
-                <th className="w-8 py-2 px-2" aria-label="Expand" />
-                <th className="text-left py-2 px-3">Timestamp</th>
-                <th className="text-left py-2 px-3">Portfolio</th>
-                <th className="text-left py-2 px-3">Type</th>
-                <th className="text-right py-2 px-3">VaR at event</th>
-                <th className="text-left py-2 px-3">Message</th>
-                <th className="text-left py-2 px-3">Acknowledged</th>
-                <th className="text-right py-2 px-3">Actions</th>
+              <tr className="text-[10px] uppercase tracking-wider text-text-muted border-b border-white/[0.04] bg-bg-secondary">
+                <th className="w-8 py-2.5 px-2" aria-label="Expand" />
+                <th className="py-2.5 px-3">Timestamp</th>
+                <th className="py-2.5 px-3">Portfolio Fund</th>
+                <th className="py-2.5 px-3">Type</th>
+                <th className="text-right py-2.5 px-3">VaR at event</th>
+                <th className="py-2.5 px-3">Message</th>
+                <th className="py-2.5 px-3">Acknowledge</th>
+                <th className="text-right py-2.5 px-3">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-white/[0.03]">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-3 py-8 text-center text-text-muted">
-                    Loading alerts…
+                  <td colSpan={8} className="px-3 py-8 text-center text-text-muted font-semibold">
+                    Syncing risk log events…
                   </td>
                 </tr>
               ) : null}
               {!isLoading && (alertsPage?.items.length ?? 0) === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-3 py-8 text-center text-text-muted">
-                    No alerts match your filters.
+                  <td colSpan={8} className="px-3 py-8 text-center text-text-muted font-semibold">
+                    No matching alert events in firm logs.
                   </td>
                 </tr>
               ) : null}
@@ -300,11 +297,11 @@ export const AlertsPage = () => {
                 const isExpanded = expandedIds.has(row.id);
                 return (
                   <Fragment key={row.id}>
-                    <tr className="h-12 border-b border-bg-secondary hover:bg-bg-tertiary align-middle">
+                    <tr className="h-12 hover:bg-bg-tertiary/40 align-middle transition-colors">
                       <td className="px-2 text-center">
                         <button
                           type="button"
-                          className="text-text-muted hover:text-accent-cyan p-1"
+                          className="text-text-muted hover:text-accent-gold p-1"
                           aria-expanded={isExpanded}
                           aria-label={isExpanded ? "Collapse alert details" : "Expand alert details"}
                           onClick={() => toggleExpanded(row.id)}
@@ -312,46 +309,54 @@ export const AlertsPage = () => {
                           <motion.span
                             animate={{ rotate: isExpanded ? 90 : 0 }}
                             transition={{ duration: 0.2 }}
-                            className="inline-block text-xs"
+                            className="inline-flex"
                           >
-                            ▶
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
                           </motion.span>
                         </button>
                       </td>
-                      <td className="px-3 font-mono text-[11px] text-text-muted whitespace-nowrap">
+                      <td className="px-3 font-mono text-[10px] text-text-muted whitespace-nowrap">
                         {new Date(row.triggered_at).toLocaleString()}
                       </td>
-                      <td className="px-3 text-text-primary">{row.portfolio_name}</td>
+                      <td className="px-3 text-text-primary font-semibold">{row.portfolio_name}</td>
                       <td className="px-3">
                         <span
-                          className={`inline-flex px-2 py-0.5 rounded text-[11px] font-semibold border ${badgeClass(row.event_type)}`}
+                          className={`inline-flex px-2 py-0.5 rounded text-[9px] font-bold tracking-wider font-mono border ${badgeClass(row.event_type)}`}
                         >
                           {badgeLabel(row.event_type)}
                         </span>
                       </td>
-                      <td className="px-3 text-right font-mono text-text-primary">
+                      <td className="px-3 text-right font-mono text-text-primary font-semibold">
                         ${Math.round(Number(row.var_95)).toLocaleString()}
                       </td>
-                      <td className="px-3 text-text-secondary text-xs max-w-md">{row.message}</td>
+                      <td className="px-3 text-text-secondary text-xs max-w-xs truncate" title={row.message}>{row.message}</td>
                       <td className="px-3 text-xs">
                         {row.acknowledged ? (
-                          <span className="text-accent-green">Yes</span>
+                          <span className="text-accent-green font-bold flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-accent-green" />
+                            Yes
+                          </span>
                         ) : (
-                          <span className="text-text-muted">Pending</span>
+                          <span className="text-text-muted flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-600" />
+                            Pending
+                          </span>
                         )}
                       </td>
                       <td className="px-3 text-right">
                         {!row.acknowledged ? (
                           <button
                             type="button"
-                            className="text-xs text-accent-cyan hover:underline disabled:opacity-50"
+                            className="text-[10px] text-accent-cyan hover:text-blue-400 font-bold uppercase tracking-wider disabled:opacity-50"
                             disabled={acknowledgeMutation.isPending}
                             onClick={() => acknowledgeMutation.mutate(row.id)}
                           >
                             Acknowledge
                           </button>
                         ) : (
-                          <span className="text-[11px] text-text-muted font-mono">
+                          <span className="text-[10px] text-text-muted font-mono">
                             {row.acknowledged_at ? new Date(row.acknowledged_at).toLocaleDateString() : "—"}
                           </span>
                         )}
@@ -359,15 +364,15 @@ export const AlertsPage = () => {
                     </tr>
                     <AnimatePresence initial={false}>
                       {isExpanded ? (
-                        <tr className="border-b border-bg-secondary">
+                        <tr className="border-b border-white/[0.04]">
                           <td colSpan={8} className="p-0">
                             <motion.div
                               key={`detail-${row.id}`}
                               initial={{ height: 0, opacity: 0 }}
                               animate={{ height: "auto", opacity: 1 }}
                               exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.28, ease: "easeInOut" }}
-                              className="overflow-hidden bg-bg-secondary/40"
+                              transition={{ duration: 0.25, ease: "easeInOut" }}
+                              className="overflow-hidden bg-[#070b13]/60 border-y border-white/[0.02]"
                             >
                               <AlertDetailPanel eventId={row.id} marginUtilization={Number(row.margin_utilization)} />
                             </motion.div>
@@ -383,26 +388,26 @@ export const AlertsPage = () => {
         </div>
 
         <div className="flex items-center justify-between gap-3 text-sm">
-          <p className="text-text-muted text-xs">
+          <p className="text-text-muted text-[10px] uppercase tracking-wider font-semibold">
             Page {page} of {totalPages}
           </p>
           <div className="flex gap-2">
-            <button
-              type="button"
-              className="px-3 py-1.5 rounded-terminal border border-border text-text-primary text-xs disabled:opacity-40"
+            <Button
+              variant="outline"
+              className="py-1 px-3 text-[10px]"
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
               Previous
-            </button>
-            <button
-              type="button"
-              className="px-3 py-1.5 rounded-terminal border border-border text-text-primary text-xs disabled:opacity-40"
+            </Button>
+            <Button
+              variant="outline"
+              className="py-1 px-3 text-[10px]"
               disabled={page >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             >
               Next
-            </button>
+            </Button>
           </div>
         </div>
       </section>
@@ -431,41 +436,42 @@ function AlertDetailPanel({ eventId, marginUtilization }: { eventId: string; mar
   const utilPct = (marginUtilization * 100).toFixed(1);
 
   return (
-    <div className="px-4 py-4 space-y-4">
-      {isLoading ? <p className="text-xs text-text-muted">Loading risk snapshot at event time…</p> : null}
-      {isError ? <p className="text-xs text-danger">Could not load alert detail.</p> : null}
+    <div className="px-6 py-5 space-y-4 font-sans border-l-2 border-accent-gold/40">
+      {isLoading ? <p className="text-[10px] uppercase tracking-wider text-text-muted font-semibold">Syncing risk metrics snapshot at event time…</p> : null}
+      {isError ? <p className="text-[10px] uppercase tracking-wider text-danger font-semibold">Could not load alert risk snapshots.</p> : null}
       {data ? (
         <>
-          <p className="text-sm text-text-secondary">
-            Portfolio was at <span className="text-text-primary font-mono">{utilPct}%</span> margin utilization when
-            this event fired.
+          <p className="text-xs text-text-secondary leading-relaxed">
+            Portfolio limit breach snapshot: reached <span className="text-text-primary font-mono font-bold">{utilPct}%</span> of the margin limit.
           </p>
+          
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="terminal-card p-3">
-              <p className="text-[10px] uppercase text-text-muted mb-1">VaR 95 (at event)</p>
-              <p className="font-mono text-lg text-text-primary">${Math.round(Number(data.var_95)).toLocaleString()}</p>
+            <div className="bg-[#05070c] border border-white/[0.04] p-4 rounded shadow-inner">
+              <p className="text-[9px] uppercase text-text-muted mb-1 font-semibold">VaR 95 (at event)</p>
+              <p className="font-mono text-base font-semibold text-text-primary">${Math.round(Number(data.var_95)).toLocaleString()}</p>
             </div>
-            <div className="terminal-card p-3">
-              <p className="text-[10px] uppercase text-text-muted mb-1">CVaR 95 (at event)</p>
-              <p className="font-mono text-lg text-text-primary">
+            <div className="bg-[#05070c] border border-white/[0.04] p-4 rounded shadow-inner">
+              <p className="text-[9px] uppercase text-text-muted mb-1 font-semibold">CVaR 95 (at event)</p>
+              <p className="font-mono text-base font-semibold text-text-primary">
                 {data.cvar_95 != null ? `$${Math.round(Number(data.cvar_95)).toLocaleString()}` : "—"}
               </p>
             </div>
-            <div className="terminal-card p-3">
-              <p className="text-[10px] uppercase text-text-muted mb-1">Stress loss (moderate)</p>
-              <p className="font-mono text-lg text-danger">
+            <div className="bg-[#05070c] border border-white/[0.04] p-4 rounded shadow-inner border-l-2 border-danger/45">
+              <p className="text-[9px] uppercase text-text-muted mb-1 font-semibold">Stress Loss (Moderate)</p>
+              <p className="font-mono text-base font-semibold text-danger">
                 {data.stress_loss_moderate != null
                   ? `$${Math.round(Number(data.stress_loss_moderate)).toLocaleString()}`
                   : "—"}
               </p>
             </div>
           </div>
-          <div className="terminal-card p-3">
-            <p className="text-[10px] uppercase text-text-muted mb-2">SHAP attribution (top 3)</p>
+          
+          <div className="bg-[#05070c] border border-white/[0.04] p-4 rounded shadow-inner">
+            <p className="text-[9px] uppercase text-text-muted mb-3 font-semibold">Risk Attribution Contributors (Top 3)</p>
             <ShapWaterfall items={topShap} maxItems={3} height={160} />
             {data.risk_computed_at ? (
-              <p className="text-[10px] text-text-muted mt-2 font-mono">
-                Risk snapshot: {new Date(data.risk_computed_at).toLocaleString()}
+              <p className="text-[8px] text-text-muted mt-3 font-mono uppercase tracking-wider">
+                Risk Engine Calculation Timestamp: {new Date(data.risk_computed_at).toLocaleString()}
               </p>
             ) : null}
           </div>

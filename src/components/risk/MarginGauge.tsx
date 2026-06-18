@@ -14,21 +14,21 @@ export const MarginGauge = ({ utilization, marginLimit = 0.05 }: Props) => {
     pct >= 0.85 ? "text-danger" : pct >= 0.7 ? "text-warning" : "text-accent-green";
 
   return (
-    <div className="terminal-card p-4">
-      <p className="text-[11px] uppercase tracking-[0.15em] text-text-secondary mb-3">Margin utilization</p>
-      <div className="relative h-2 bg-border rounded-terminal overflow-hidden">
+    <div className="terminal-card p-5 space-y-3 shadow-lg shadow-black/25">
+      <p className="text-[9px] uppercase tracking-wider font-semibold text-text-muted mb-2">Margin Limit Utilization</p>
+      <div className="relative h-2.5 bg-white/[0.04] rounded overflow-hidden border border-white/[0.02] shadow-inner">
         <motion.div
-          className={`h-full ${fill}`}
+          className={`h-full rounded-sm ${fill}`}
           initial={false}
           animate={{ width: `${widthPct}%` }}
           transition={{ duration: 0.6 }}
         />
-        <div className="absolute top-0 bottom-0 w-px bg-text-primary/80" style={{ left: "85%" }}>
-          <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] text-text-muted">WARN</span>
+        <div className="absolute top-0 bottom-0 w-px bg-white/40" style={{ left: "85%" }}>
+          <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] font-bold text-text-muted uppercase tracking-wider">Warn</span>
         </div>
       </div>
-      <p className={`font-mono text-sm mt-2 ${textColor}`}>
-        {(utilization * 100).toFixed(1)}% of margin limit
+      <p className={`font-mono text-xs font-bold mt-2 ${textColor}`}>
+        {(utilization * 100).toFixed(2)}% of {(marginLimit * 100).toFixed(1)}% margin limit
       </p>
     </div>
   );

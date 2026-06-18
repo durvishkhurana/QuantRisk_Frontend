@@ -8,50 +8,59 @@
   }
 
   ::selection {
-    background-color: rgb(16 185 129 / 0.25);
+    background-color: rgba(223, 195, 153, 0.2);
+    color: #f1f5f9;
   }
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: #475569 #1e293b;
+    scrollbar-color: rgba(255, 255, 255, 0.08) #030508;
   }
 
   *::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   *::-webkit-scrollbar-track {
-    background: #1e293b;
+    background: #030508;
   }
 
   *::-webkit-scrollbar-thumb {
-    background: #475569;
-    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+  }
+  
+  *::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.15);
   }
 }
 
 @layer components {
   .terminal-card {
-    @apply bg-bg-secondary border border-slate-700/50 rounded-lg shadow-card;
+    @apply bg-bg-secondary border border-white/[0.04] rounded-lg shadow-card hover:border-white/[0.08] transition-colors duration-200;
   }
 
   .terminal-panel {
-    @apply bg-bg-secondary border border-slate-700/50 rounded-lg shadow-card;
+    @apply bg-bg-secondary border border-white/[0.04] rounded-lg shadow-card;
+  }
+
+  .gold-panel {
+    @apply bg-bg-secondary/80 border border-accent-gold/15 rounded-lg shadow-gold backdrop-blur-md;
   }
 }
 
 @keyframes pulse-border {
   0%,
   100% {
-    border-color: rgba(51, 65, 85, 0.8);
+    border-color: rgba(255, 255, 255, 0.04);
   }
   50% {
-    border-color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.6);
   }
 }
 
 .animate-\[pulse-border_1s_ease-in-out_3\] {
   animation: pulse-border 1s ease-in-out 3;
-  border: 1px solid rgba(51, 65, 85, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.04);
 }
