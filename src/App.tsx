@@ -4,7 +4,6 @@ import { useAuthStore } from "./store";
 import { AlertsPage } from "./pages/Alerts";
 import { AuthPage } from "./pages/Auth";
 import { DashboardPage } from "./pages/Dashboard";
-import { DocsPage } from "./pages/Docs";
 import { LandingPage } from "./pages/Landing";
 import { AggregateViewPage } from "./pages/AggregateView";
 import { PortfolioPage } from "./pages/PortfolioDetail";
@@ -18,7 +17,6 @@ export const App = () => {
       <Route path="/aggregate" element={<Protected><AggregateViewPage /></Protected>} />
       <Route path="/portfolio/:portfolioId" element={<Protected><PortfolioPage /></Protected>} />
       <Route path="/alerts" element={<Protected><AlertsPage /></Protected>} />
-      <Route path="/docs" element={<DocsPage />} />
     </Routes>
   );
 };

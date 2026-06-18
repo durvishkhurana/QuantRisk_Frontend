@@ -1,6 +1,6 @@
 # QuantRisk Frontend
 
-React single-page application for portfolio management, risk visualization, margin alerts, and embedded API documentation. Talks to the QuantRisk backend over HTTPS and WebSockets.
+React single-page application for portfolio management, risk visualization, and margin alerts. Talks to the QuantRisk backend over HTTPS and WebSockets.
 
 ## Features
 
@@ -8,7 +8,6 @@ React single-page application for portfolio management, risk visualization, marg
 - Dashboard with portfolio cards and aggregate risk summary
 - Portfolio detail: positions, VaR/CVaR metrics, stress tests, Monte Carlo, correlation matrix, optimizer, backtest, SHAP waterfall, volatility forecast, risk narrative
 - Real-time margin alerts (REST + WebSocket stream replay)
-- In-app Swagger UI at `/docs` (JWT-aware)
 - Responsive layout with Tailwind CSS and Recharts
 
 ## Stack
@@ -66,7 +65,7 @@ After deploy, set the backend `FRONTEND_URL` and `FRONTEND_URLS` to your fronten
 src/
   api/              # Typed API clients (portfolios, risk, alerts)
   api.ts            # Axios instance and auth header helper
-  pages/            # Routes: dashboard, portfolio, alerts, auth, docs
+  pages/            # Routes: dashboard, portfolio, alerts, auth
   components/       # Risk panels, layout, alerts feed
   hooks/            # Risk polling and WebSocket margin alerts
 ```
@@ -81,7 +80,10 @@ src/
 | `/aggregate` | Auth | Cross-portfolio summary |
 | `/portfolio/:id` | Auth | Risk workspace |
 | `/alerts` | Auth | Margin events |
-| `/docs` | Public | Embedded OpenAPI UI |
+
+## API documentation
+
+The backend still exposes OpenAPI at `{API_URL}/api/docs` on Render if you need to inspect endpoints directly.
 
 ## CI
 

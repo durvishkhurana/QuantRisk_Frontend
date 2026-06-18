@@ -24,9 +24,6 @@ export const Navbar = ({ breadcrumb = "Dashboard", wsConnected = false }: Props)
           QR ENGINE
         </Link>
         <nav className="flex gap-6 text-xs uppercase tracking-wider font-semibold text-text-secondary">
-          <Link to="/docs" className="hover:text-accent-gold transition-colors">
-            API Docs
-          </Link>
           <Link to="/auth" className="hover:text-accent-gold transition-colors">
             Login
           </Link>

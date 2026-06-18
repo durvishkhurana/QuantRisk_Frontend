@@ -71,7 +71,7 @@ export const DashboardPage = () => {
           <div className="terminal-panel p-6 text-xs space-y-4 border border-danger/15 bg-danger/[0.02] rounded">
             <p className="text-danger font-semibold uppercase tracking-wider">Failed to sync portfolios from remote core.</p>
             <p className="text-text-muted font-mono break-all bg-black/45 p-3 rounded border border-white/[0.02]">
-              {error instanceof Error ? error.message : "Request failed — check network connectivity and API keys."}
+              {error instanceof Error ? error.message : "Request failed — check network connectivity or sign in again."}
             </p>
             <Button variant="outline" onClick={() => refetch()}>
               Retry Sync

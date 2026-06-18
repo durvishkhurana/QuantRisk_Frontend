@@ -55,9 +55,9 @@ export const LandingPage = () => (
           <Link to="/dashboard">
             <Button className="px-6 py-2.5">Launch Terminal</Button>
           </Link>
-          <Link to="/docs">
+          <Link to="/auth">
             <Button variant="outline" className="px-6 py-2.5">
-              API Specifications
+              Sign in
             </Button>
           </Link>
         </div>
