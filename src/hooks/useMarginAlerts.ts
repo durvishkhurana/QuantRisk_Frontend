@@ -29,7 +29,12 @@ export const useMarginAlerts = (portfolioId?: string, onMessage?: (msg: StreamMe
     const connect = () => {
       if (closed) return;
       const sinceParam = isReconnect.current ? lastStreamId.current : "$";
-      ws = new WebSocket(`${wsBase}/ws/portfolios/${portfolioId}?since=${encodeURIComponent(sinceParam)}`);
+      // The backend authenticates the WebSocket via this token (browsers can't
+      // set Authorization headers on a WS handshake).
+      const token = localStorage.getItem("qr_token") ?? "";
+      ws = new WebSocket(
+        `${wsBase}/ws/portfolios/${portfolioId}?since=${encodeURIComponent(sinceParam)}&token=${encodeURIComponent(token)}`,
+      );
 
       ws.onopen = () => {
         setConnected(true);

@@ -2,6 +2,10 @@
 
 React single-page application for portfolio management, risk visualization, and margin alerts. Talks to the QuantRisk backend over HTTPS and WebSockets.
 
+> This is its **own git repository**, deployed independently to Vercel. The sibling
+> `backend/` is a separate repo (Render). There is no root-level monorepo. The
+> WebSocket carries the stored JWT as a `token` query param for authentication.
+
 ## Features
 
 - Registration and login with JWT stored client-side
@@ -31,10 +35,9 @@ React single-page application for portfolio management, risk visualization, and 
 
 Copy `.env.example` to `.env` and set:
 
-- `VITE_API_URL` — backend origin (no trailing slash)
-- `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — from [Supabase → Project Settings → API](https://supabase.com/dashboard/project/_/settings/api)
+- `VITE_API_URL` — backend origin (no trailing slash). This is the only variable the app needs.
 
-Vite embeds these at build time for production. Client: `src/lib/supabase.ts`.
+Vite embeds it at build time for production. Authentication is JWT against the backend (`/auth/*`); the frontend does **not** use Supabase. The WebSocket carries the stored JWT as a `token` query param.
 
 ## Local development
 

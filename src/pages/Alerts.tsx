@@ -493,11 +493,19 @@ function useAlertsLiveSockets(portfolioIds: string[], onActivity: () => void) {
     if (!portfolioIds.length) return;
 
     const wsBase = resolveWebSocketBase();
+    const token = localStorage.getItem("qr_token") ?? "";
+    let closed = false;
     const sockets: WebSocket[] = [];
+    const timers: ReturnType<typeof setTimeout>[] = [];
 
-    portfolioIds.forEach((portfolioId) => {
+    const connect = (portfolioId: string) => {
+      if (closed) return;
+      // Resume from the last seen stream id so a reconnect replays events that
+      // arrived while the socket was down (not just "$" = new-from-now).
       const since = streamIdsRef.current[portfolioId] ?? "$";
-      const ws = new WebSocket(`${wsBase}/ws/portfolios/${portfolioId}?since=${encodeURIComponent(since)}`);
+      const ws = new WebSocket(
+        `${wsBase}/ws/portfolios/${portfolioId}?since=${encodeURIComponent(since)}&token=${encodeURIComponent(token)}`,
+      );
       ws.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data) as { stream_id?: string };
@@ -509,10 +517,19 @@ function useAlertsLiveSockets(portfolioIds: string[], onActivity: () => void) {
         }
         onActivityRef.current();
       };
+      ws.onclose = () => {
+        if (!closed) {
+          timers.push(setTimeout(() => connect(portfolioId), 2000));
+        }
+      };
       sockets.push(ws);
-    });
+    };
+
+    portfolioIds.forEach(connect);
 
     return () => {
+      closed = true;
+      timers.forEach(clearTimeout);
       sockets.forEach((ws) => ws.close());
     };
   }, [portfolioIds.join("|")]);

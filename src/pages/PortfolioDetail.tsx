@@ -222,6 +222,24 @@ export const PortfolioPage = () => {
           </div>
         </div>
 
+        {risk.data?.computed_at && (() => {
+          // Backend timestamps are UTC but may serialize without an offset; treat
+          // a missing tz as UTC so the age isn't skewed by the viewer's timezone.
+          const raw = String(risk.data.computed_at);
+          const iso = /[zZ]|[+-]\d\d:?\d\d$/.test(raw) ? raw : `${raw}Z`;
+          const ageMin = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+          if (ageMin < 5) return null;
+          return (
+            <div className="flex items-center gap-2 rounded border border-warning/25 bg-warning/10 px-3 py-2 text-[11px] font-mono text-warning">
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3 2" />
+              </svg>
+              Risk last computed {ageMin} min ago. Click “Compute Risk” for a fresh run — automatic 60s refresh requires the Celery worker to be running.
+            </div>
+          );
+        })()}
+
         {portfolioId && <RiskNarrative portfolioId={portfolioId} narrative={risk.data?.risk_narrative} />}
 
         <div className="flex gap-1.5 border-b border-white/[0.04] pb-px">
